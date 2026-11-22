@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tạo link thiệp mời – Lê Hưng & Thuỳ Chi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,400&family=Lora:wght@400;500;600&display=swap&subset=vietnamese">
+<style>
+:root{--red:#4b1e26;--red2:#5e2630;--paper:#f6f1ea;--line:#e2d6c8;--muted:#7a6a64;--sage:#6e7457}
+*{box-sizing:border-box}
+body{margin:0;background:#e9e0d4;color:#2e1418;font-family:"Lora",Georgia,serif;font-size:16px;line-height:1.5}
+.wrap{max-width:640px;margin:0 auto;padding:28px 18px 60px}
+header{text-align:center;margin-bottom:22px}
+h1{margin:0;font-family:"Playfair Display",Georgia,serif;font-weight:600;color:var(--red);font-size:28px;line-height:1.2}
+.sub{margin:6px 0 0;color:var(--muted);font-size:15px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 10px 30px -18px rgba(75,30,38,.35)}
+label{display:block;font-family:"Playfair Display",serif;font-weight:600;color:var(--red);font-size:15px;margin-bottom:6px}
+.hint{margin:6px 0 0;color:var(--muted);font-size:13.5px}
+textarea,input[type=url]{width:100%;font:inherit;font-size:16px;color:#2e1418;background:#fff;border:1.5px solid #cdbcae;border-radius:12px;padding:12px 14px}
+textarea{min-height:170px;resize:vertical}
+textarea:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid #b4b998;outline-offset:2px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--muted);font-size:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+button{font:inherit;cursor:pointer;border-radius:24px;min-height:46px;padding:0 20px;font-family:"Playfair Display",serif;font-weight:600;letter-spacing:.04em}
+.primary{background:var(--red);color:#fbf6ee;border:0}
+.primary:hover{background:var(--red2)}
+.ghost{background:transparent;color:var(--red);border:1.5px solid var(--red)}
+.ghost:hover{background:rgba(75,30,38,.06)}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.item .nm{font-weight:600;color:var(--red)}
+.item .lk{display:block;margin-top:4px;font-size:13px;color:var(--muted);word-break:break-all}
+.item .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.item button{min-height:40px;padding:0 16px;font-size:14px}
+.item a.open{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border-radius:20px;border:1.5px solid var(--line);color:var(--red);text-decoration:none;font-family:"Playfair Display",serif;font-weight:600;font-size:14px}
+.status{min-height:1.4em;margin:10px 0 0;color:var(--sage);font-style:italic;text-align:center}
+.empty{color:var(--muted);text-align:center;margin:0}
+.copyall{display:none;margin-top:14px}
+.manual{display:none;margin-top:10px}
+.manual textarea{min-height:120px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Tạo link thiệp mời riêng</h1>
+    <p class="sub">Gõ tên khách mời, bấm "Tạo link", rồi sao chép gửi cho từng người.</p>
+  </header>
+
+  <section class="card">
+    <label for="names">Tên khách mời (mỗi người một dòng)</label>
+    <textarea id="names" placeholder="Gia đình anh Nam&#10;Bạn Lan&#10;Cháu ông Cảnh bà Ỏi"></textarea>
+    <p class="hint">Viết có dấu, đúng như muốn hiện trên thiệp. Ví dụ "Gia đình anh Nam" sẽ hiện là "Trân trọng kính mời GIA ĐÌNH ANH NAM".</p>
+    <details>
+      <summary>Đổi link thiệp gốc (thường không cần)</summary>
+      <p class="hint" style="margin-top:8px"><label for="base" style="display:inline;font-size:14px">Link thiệp gốc</label></p>
+      <input type="url" id="base" value="">
+    </details>
+    <div class="row">
+      <button type="button" class="primary" id="go">Tạo link</button>
+      <button type="button" class="ghost" id="clear">Xoá hết</button>
+    </div>
+  </section>
+
+  <section class="card" aria-live="polite">
+    <ul class="list" id="out"><li><p class="empty">Danh sách link sẽ hiện ở đây.</p></li></ul>
+    <button type="button" class="ghost copyall" id="copyAll">Sao chép tất cả</button>
+    <div class="manual" id="manual">
+      <p class="hint">Máy không cho tự sao chép. Bạn giữ tay vào ô dưới, chọn tất cả rồi sao chép:</p>
+      <textarea id="manualText" readonly></textarea>
+    </div>
+    <p class="status" id="status"></p>
+  </section>
+</div>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var names=$("names"),base=$("base"),out=$("out"),status=$("status"),copyAll=$("copyAll"),manual=$("manual"),manualText=$("manualText");
+  var current=[];
+  function enc(name){var b=new TextEncoder().encode(name),h="";for(var i=0;i<b.length;i++)h+=b[i].toString(16).padStart(2,"0");return "k-"+h;}
+  if(!base.value){ base.value=new URL("./",location.href).href; }
+  function baseUrl(){return (base.value||"").trim().split("#")[0].split("?")[0];}
+  function say(t){status.textContent=t;}
+  function showManual(text){manualText.value=text;manual.style.display="block";manualText.focus();manualText.select();}
+  function copy(text,ok){
+    try{
+      navigator.clipboard.writeText(text).then(function(){say(ok);manual.style.display="none";},function(){showManual(text);say("");});
+    }catch(e){showManual(text);say("");}
+  }
+  function render(){
+    out.innerHTML="";
+    if(!current.length){var li=document.createElement("li");li.innerHTML='<p class="empty">Danh sách link sẽ hiện ở đây.</p>';out.appendChild(li);copyAll.style.display="none";return;}
+    current.forEach(function(g){
+      var li=document.createElement("li");li.className="item";
+      var nm=document.createElement("div");nm.className="nm";nm.textContent=g.name;
+      var lk=document.createElement("span");lk.className="lk";lk.textContent=g.url;
+      var acts=document.createElement("div");acts.className="acts";
+      var b=document.createElement("button");b.type="button";b.className="primary";b.textContent="Sao chép link";
+      b.addEventListener("click",function(){copy(g.url,"Đã sao chép link của "+g.name+".");});
+      var m=document.createElement("button");m.type="button";m.className="ghost";m.textContent="Sao chép kèm lời mời";
+      m.addEventListener("click",function(){copy("Trân trọng kính mời "+g.name+" tới dự lễ cưới của Lê Hưng & Thuỳ Chi. Thiệp mời: "+g.url,"Đã sao chép lời mời cho "+g.name+".");});
+      var a=document.createElement("a");a.className="open";a.href=g.url;a.target="_blank";a.rel="noopener";a.textContent="Xem thử";
+      acts.appendChild(b);acts.appendChild(m);acts.appendChild(a);
+      li.appendChild(nm);li.appendChild(lk);li.appendChild(acts);out.appendChild(li);
+    });
+    copyAll.style.display="inline-flex";
+  }
+  $("go").addEventListener("click",function(){
+    var u=baseUrl();
+    if(!/^(https?|file):/.test(u)){say("Link thiệp gốc chưa đúng.");return;}
+    var seen={};current=names.value.split(/\r?\n/).map(function(x){return x.trim().replace(/\s+/g," ")}).filter(function(x){if(!x||seen[x])return false;seen[x]=1;return true;}).slice(0,500)
+      .map(function(n){n=n.slice(0,60);return {name:n,url:u+"?ten="+encodeURIComponent(n)};});
+    manual.style.display="none";
+    render();
+    say(current.length?("Đã tạo "+current.length+" link."):"Bạn chưa nhập tên khách nào.");
+  });
+  $("clear").addEventListener("click",function(){names.value="";current=[];render();manual.style.display="none";say("");names.focus();});
+  copyAll.addEventListener("click",function(){copy(current.map(function(g){return g.name+": "+g.url}).join("\n"),"Đã sao chép tất cả "+current.length+" link.");});
+})();
+</script>
+</body>
+</html>
